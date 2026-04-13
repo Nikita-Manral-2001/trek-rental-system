@@ -696,7 +696,7 @@ namespace TTH.Controllers
 
         private string GenerateRazorpaySignature(string orderId, string paymentId)
         {
-            string secret = "Hctq0JOfkx8ziVyXzoZKzaxI"; // production key
+            string secret = "YOUR_SECRET_KEY"; // production key
             string payload = orderId + "|" + paymentId;
             using (HMACSHA256 hmac = new HMACSHA256(Encoding.UTF8.GetBytes(secret)))
             {
