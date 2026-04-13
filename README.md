@@ -79,24 +79,6 @@ I developed RESTful APIs using ASP.NET Core Web API to handle core business logi
 * Process payment requests
 * Update inventory after successful transactions
 
----
-
-### 🔗 Sample Endpoints
-
-* GET /api/RentApi/get-all-products
-* GET /api/RentApi/get-product-details/{id}
-* POST /api/RentApi/add-to-cart
-* POST /api/RentApi/check-quantity-availability
-* POST /api/RentApi/handle-payment-success
-
----
-
-### 🌐 Live API Example
-
-https://api.trekthehimalayas.com/api/RentApi/get-all-products/66/7808
-
-⚠️ Note:
-This API is secured and will not return data without a valid JWT token and proper trek booking.
 
 
 ---
