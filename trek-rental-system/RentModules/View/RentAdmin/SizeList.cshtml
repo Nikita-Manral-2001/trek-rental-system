@@ -1,0 +1,45 @@
+﻿@model IEnumerable<TTH.Areas.Super.Models.Rent.SizeModel>
+
+@{
+    ViewData["Title"] = "Size List";
+}
+<div class="container ">
+    <h2>Size List</h2>
+
+    <table class="table">
+        <thead>
+            <tr>
+                <th>size_id</th>
+                <th>size</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var size in Model)
+            {
+                <tr>
+                    <td>@size.IdSize </td>
+                    <td>@size.Name</td>
+                    <td>
+                        <form asp-action="DeleteSize" asp-controller="RentAdmin" method="post" style="display:inline;">
+                            <input type="hidden" name="id" value="@size.IdSize " />
+                            <button type="submit" class="btn btn-primary">Delete</button>
+                        </form>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+    <hr />
+
+    <h3>Add New Size</h3>
+
+    <form asp-action="AddSize" asp-controller="RentAdmin" method="post" class="form-inline">
+        <div class="form-group mb-2">
+            <label for="sizeName" class="sr-only">Size Name</label>
+            <input type="text" class="form-control" id="sizeName" name="Name" placeholder="Size Name" required>
+        </div>
+        <button type="submit" class="btn btn-primary mb-2">Add Size</button>
+    </form>
+</div>

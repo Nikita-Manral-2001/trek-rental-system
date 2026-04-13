@@ -1,0 +1,148 @@
+﻿@model TTH.Areas.Super.Models.Rent.InventoryItemModel;
+
+<div class="container form-container">
+    <div class="row">
+        <div class="col-md-12">
+            <h3>Add Inventory</h3>
+            <form id="inventoryForm">
+                <div class="form-row">
+
+                    <div class="form-group col-md-6">
+                        <label for="store">Store Name</label>
+                        <select id="store" class="form-control">
+                            <option value="">Select Store</option>
+                            @if (Model.Stores_Name != null)
+                            {
+                                @foreach (var stores in Model.Stores_Name)
+                                {
+                                    <option value="@stores.Store_Id">@stores.StoreName</option>
+                                }
+                            }
+                        </select>
+                    </div>
+
+                    <div class="form-group col-md-6">
+                        <label for="product">Product</label>
+                        <select id="product" class="form-control" onchange="getProductDetails()">
+                            <option value="">Select Product</option>
+                            @if (Model.Products_Name != null)
+                            {
+                                @foreach (var product in Model.Products_Name)
+                                {
+                                    <option value="@product.Products_Id">@product.ProductName</option>
+                                }
+                            }
+                        </select>
+                    </div>
+
+                </div>
+                <button type="button" class="btn btn-primary btn-save" onclick="saveInventory()">Save</button>
+                <div id="error-message" class="error-message"></div>
+            </form>
+            <div id="inventoryTable" class="inventory-table" style="display:none;">
+                <table class="table table-bordered">
+                    <thead>
+                        <tr>
+                            <th>Product ID</th>
+                            <th>Size ID</th>
+                            <th>Product Name</th>
+                            <th>Size Name</th>
+                            <th>Quantity</th>
+                            <th>Price Per Day</th>
+                        </tr>
+                    </thead>
+                    <tbody id="productDetails">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function getProductDetails() {
+        var productId = $('#product').val();
+        if (productId) {
+            $.ajax({
+                url: '/super/RentAdmin/GetProductSizes/' + productId,
+                type: 'GET',
+                success: function (data) {
+                    $('#productDetails').empty();
+                    if (data && data.length > 0) {
+                        $('#inventoryTable').show();
+                        data.forEach(function (item) {
+                            $('#productDetails').append(
+                                '<tr>' +
+                                '<td>' + item.productId + '</td>' +
+                                '<td>' + item.s_Id + '</td>' +
+                                '<td>' + item.productName + '</td>' +
+                                '<td>' + item.name + '</td>' +
+                                '<td><input type="number" class="form-control quantity" data-product-id="' + item.productId + '" data-size-id="' + item.s_Id + '" data-size-name="' + item.name + '" value="0" /></td>' +
+                                '<td><input type="number" class="form-control price" data-size-id="' + item.s_Id + '" value="0" /></td>' +
+                                '</tr>'
+                            );
+                        });
+                    } else {
+                        $('#inventoryTable').hide();
+                    }
+                },
+                error: function () {
+                    $('#inventoryTable').hide();
+                    alert('Failed to retrieve sizes.');
+                }
+            });
+        } else {
+            $('#inventoryTable').hide();
+        }
+    }
+
+    function saveInventory() {
+        var storeId = $('#store').val();
+        var productId = $('#product').val();
+
+        if (!storeId || !productId) {
+            alert('Please select a store and a product.');
+            return;
+        }
+
+        var inventoryItems = [];
+        $('#productDetails tr').each(function () {
+            var sizeId = $(this).find('.quantity').data('size-id');
+            var sizeName = $(this).find('.quantity').data('size-name'); // Fetch SizeName
+            var quantity = $(this).find('.quantity').val();
+            var pricePerDay = $(this).find('.price').val();
+            var productId = $(this).find('.quantity').data('product-id');
+
+            if (quantity > 0 && pricePerDay > 0) {
+                inventoryItems.push({
+                    Product_Id: productId,
+                    SizeId: sizeId,
+                    SizeName: sizeName, // Include SizeName
+                    Quantity: quantity,
+                    PricePerDay: pricePerDay,
+                    Store_Id: storeId
+                });
+            }
+        });
+
+        if (inventoryItems.length > 0) {
+            $.ajax({
+                url: '/super/RentAdmin/SaveInventory',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(inventoryItems),
+                success: function () {
+                    alert('Inventory saved successfully.');
+                    $('#inventoryForm')[0].reset();
+                    $('#productDetails').empty();
+                    $('#inventoryTable').hide();
+                },
+                error: function (xhr) {
+                    alert('Failed to save inventory: ' + xhr.responseText);
+                }
+            });
+        } else {
+            alert('Please enter valid quantities and prices.');
+        }
+    }
+</script>

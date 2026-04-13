@@ -1,0 +1,121 @@
+﻿@model IEnumerable<TTH.Areas.Super.Models.Rent.StoresModel>
+
+<div class="container">
+    <h2>Edit Inventory</h2>
+    <form asp-action="EditInventory" method="post" onsubmit="return saveInventoryItems()">
+        <div class="form-group">
+            <label for="storeId">Store Name</label>
+            <select class="form-control" id="storeId" name="storeId" onchange="loadInventoryItems()">
+                <option value="">Select a store</option>
+                @foreach (var store in Model)
+                {
+                    <option value="@store.Store_Id">@store.StoreName</option>
+                }
+            </select>
+        </div>
+        <div class="inventory-table" style="display:none;">
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th>Invent ID</th>
+                        <th>Product Name</th>
+                        <th>Size Name</th>
+                        <th>Quantity</th>
+                        <th>Price Per Day</th>
+                    </tr>
+                </thead>
+                <tbody id="inventory-details">
+                    <!-- Inventory details will be loaded here -->
+                </tbody>
+            </table>
+        </div>
+        <div class="alert alert-danger" id="no-inventory-message" style="display:none;">
+            No inventory found for the selected store.
+        </div>
+        <button type="submit" class="btn btn-primary">Save</button>
+    </form>
+</div>
+
+<script>
+    function loadInventoryItems() {
+        var storeId = document.getElementById("storeId").value;
+        console.log(storeId);
+        if (storeId) {
+            fetch(`/Super/RentAdmin/GetInventoryItems?storeId=${storeId}`)
+                .then(response => response.json())
+                .then(data => {
+                    var tableBody = document.getElementById("inventory-details");
+                    tableBody.innerHTML = ""; // Clear the table
+
+                    if (data && data.length > 0) {
+                        data.forEach(item => {
+                            var row = `<tr>
+                                                <td>${item.invent_Id}</td>
+                                                <td>${item.productName || ''}</td>
+                                                           <td>${item.sizeName|| ''}</td>
+                                                <td><input type="number" class="form-control" name="quantity" value="${item.quantity}" data-invent-id="${item.invent_Id}"></td>
+                                                <td><input type="number" class="form-control" name="pricePerDay" value="${item.pricePerDay}" data-invent-id="${item.invent_Id}"></td>
+                                            </tr>`;
+                            tableBody.innerHTML += row;
+                        });
+
+                        document.querySelector(".inventory-table").style.display = "block";
+                        document.getElementById("no-inventory-message").style.display = "none";
+                    } else {
+                        document.querySelector(".inventory-table").style.display = "none";
+                        document.getElementById("no-inventory-message").style.display = "block";
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching inventory items:', error);
+                    document.querySelector(".inventory-table").style.display = "none";
+                    document.getElementById("no-inventory-message").style.display = "block";
+                });
+        } else {
+            document.querySelector(".inventory-table").style.display = "none";
+            document.getElementById("no-inventory-message").style.display = "none";
+        }
+    }
+
+    function saveInventoryItems() {
+        var storeId = document.getElementById("storeId").value;
+        var rows = document.querySelectorAll("#inventory-details tr");
+
+        var inventoryItems = [];
+        rows.forEach(row => {
+            var inventId = row.querySelector("td:first-child").innerText;
+            var quantity = row.querySelector("input[name='quantity']").value;
+            var pricePerDay = row.querySelector("input[name='pricePerDay']").value;
+         
+
+            inventoryItems.push({
+                invent_Id: inventId,
+                quantity: quantity,
+                pricePerDay: pricePerDay,
+                
+            });
+        });
+
+        fetch(`/Super/RentAdmin/UpdateInventoryItems`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(inventoryItems)
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Inventory updated successfully');
+                } else {
+                    alert('Failed to update inventory');
+                }
+            })
+            .catch(error => {
+                console.error('Error updating inventory items:', error);
+                alert('An error occurred while updating inventory');
+            });
+
+        return false; // Prevent form submission
+    }
+</script>

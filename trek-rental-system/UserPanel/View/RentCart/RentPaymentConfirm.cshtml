@@ -1,0 +1,50 @@
+﻿@model List<TTH.Areas.Super.Models.Rent.OrderedProductViewModel>
+
+
+@{
+    var participantProducts = ViewBag.ParticipantProducts as List<dynamic>;
+}
+
+<body>
+    <div class="container">
+        <div class="row justify-content-center align-items-center vh-100">
+            <div class="col-md-6 text-center">
+                <div class="alert alert-success" role="alert">
+                    <h1 class="alert-heading">Payment Successful!</h1>
+                    <p>Thank you for your purchase. Your payment has been successfully processed.</p>
+                   
+                
+                    <p class="mb-0">You will receive a confirmation email shortly.</p>
+
+                    <h4 class="mt-4">Ordered Items:</h4>
+                    <ul class="list-group mb-3">
+                        @foreach (var item in Model)
+                        {
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <span>
+                                    <strong>@item.ProductName-</strong>@item.VariantName - @item.Quantity
+                                </span>
+                  
+                            </li>
+                        }
+                    </ul>
+                    <p style="color: green;">Total Amount: @ViewBag.TotalAmount</p>
+                </div>
+                <button class="btn btn-primary mt-3" id="continueShopping">Continue To Explore Treks</button>
+            </div>
+
+           
+        </div>
+    </div>
+
+  
+
+
+    <script>
+        $(document).ready(function () {
+            $('#continueShopping').click(function () {
+                window.location.href = 'https://trekthehimalayas.com/';
+            });
+        });
+    </script>
+</body>

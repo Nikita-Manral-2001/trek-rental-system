@@ -1,0 +1,185 @@
+﻿@model List<TTH.Areas.Super.Data.Rent.RentAllParticipant>
+
+    <style>
+    .rent-export-container {
+        display: flex;
+        justify-content: flex-end; /* Aligns content to the right */
+        margin-top: -40px; /* Keep if needed for spacing */
+    }
+
+    .RentExportbtn {
+        /* You can style the button as needed here */
+        padding: 8px 16px;
+        cursor: pointer;
+    }
+    </style>
+<div>
+    <form id="exportForm" method="post"
+          asp-area="Super"
+          asp-action="ExportExcelData"
+          asp-controller="RentAdmin">
+
+        <input type="hidden" name="orderIds" id="orderIdsFirst" />
+
+        <div class="rent-export-container">
+            <button type="button"
+                    class="btn btn-primary RentExportbtn"
+                    onclick="prepareExport('exportForm','orderIdsFirst')">
+                Export Data
+            </button>
+        </div>
+
+        @foreach (var group in Model)
+        {
+            <input type="hidden" class="order-id" value="@group.Participant_Id" />
+        }
+    </form>
+
+    <form id="exportsecondForm" method="post"
+          asp-area="Super"
+          asp-action="BalanceSheetData"
+          asp-controller="RentAdmin">
+
+        <input type="hidden" name="orderIds" id="orderIdsSecond" />
+
+        <div class="rent-export-second-container">
+            <button type="button"
+                    class="btn btn-primary RentsecondExportbtn"
+                    onclick="prepareExport('exportsecondForm','orderIdsSecond')">
+                Balance Sheet
+            </button>
+        </div>
+
+        @foreach (var group in Model)
+        {
+            <input type="hidden" class="order-id" value="@group.Participant_Id" />
+        }
+    </form>
+    <h5>Total Amount Collected: <b>@ViewBag.TotalAmount</b></h5>
+    <table class="table table-bordered">
+        <thead class="thead-light">
+            <tr>
+
+                <th>User Details</th>
+                <th>Items Details</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var group in Model.GroupBy(x => new { x.UserId, x.TrekId, x.StartDate, x.EndDate,x.BookingId }))
+            {
+                <tr>
+
+                    <td>
+                        <strong>Participant_Id:</strong> @group.First().Participant_Id <br>
+                        <strong>BookingId:</strong> @group.First().BookingId <br>
+                        <strong>Name:</strong> @group.First().FirstName @group.First().LastName <br>
+                        <strong>Email:</strong> @group.First().Email <br>
+                        <strong>Phone:</strong> @group.First().MobileNo <br>
+                        <strong>TrekName:</strong> @group.First().TrekName <br>
+                        <strong>Dept.Date:</strong> @group.First().StartDate.ToString("dd MMM yyyy") To @group.First().EndDate.ToString("dd MMM yyyy") <br>
+
+
+                    </td>
+
+                    <td>
+                        @{
+                            var formattedItems = new List<string>();
+
+                            for (int i = 0; i < group.Count(); i++)
+                            {
+                                var item = group.ElementAt(i);
+                                var names = item.ProductNames.Trim(new char[] { '[', ']', '"' }).Split(',');
+                                var quantities = item.Quantities.Trim(new char[] { '[', ']' }).Split(',');
+                                var variants = item.ProductVarients.Trim(new char[] { '[', ']', '"' }).Split(',');
+
+                                for (int j = 0; j < names.Length; j++)
+                                {
+                                    if (j < quantities.Length && j < variants.Length)
+                                    {
+                                        formattedItems.Add($"{names[j].Trim().Trim('\"')} {quantities[j].Trim()} {variants[j].Trim().Trim('\"')}");
+                                    }
+                                }
+                            }
+
+                            var displayItems = string.Join("<br>", formattedItems);
+                        }
+
+                        @Html.Raw(displayItems)
+
+                    </td>
+
+                    <td>
+                        <strong>Paid Amount:</strong> @group.Sum(x => x.TotalAmount).ToString()<br />
+
+                        @if (group.First().PaymentStatus == "Paid"
+                                            || group.First().PaymentStatus == "Offline"
+                                            || group.First().PaymentStatus == "Unpaid")
+                        {
+                            <strong>Order Date:</strong> 
+                            @group.First().OrderDate.ToString("dd MMM yyyy")
+                            <br />
+                            <strong>Payment Status:</strong>
+
+                            <span class="badge
+                    @(group.First().PaymentStatus == "Paid" ? "badge-success" :
+                                                                                  group.First().PaymentStatus == "Offline" ? "badge-secondary" :
+                                                group.First().PaymentStatus == "Unpaid" ? "badge-danger" :
+                                                "badge-secondary")">
+                        @group.First().PaymentStatus
+                    </span>
+                    <button type="button"
+                                   class="btn btn-primary btn-sm sendEmailBtn"
+                                   data-booking-id="@group.First().BookingId">
+                        Send Email
+                    </button>
+
+                            <br />
+                                        }
+                        <p><strong>Note:</strong> @group.First().Note</p>
+                    </td>
+
+
+                  
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+<script>
+    function prepareExport(formId, hiddenInputId) {
+        let orderIds = [];
+
+        document.querySelectorAll('.order-id').forEach(input => {
+            orderIds.push(input.value);
+        });
+
+        document.getElementById(hiddenInputId).value = orderIds.join(',');
+        document.getElementById(formId).submit();
+    }
+</script>
+<script>
+    $(document).off("click", ".sendEmailBtn"); // <-- FIX (removes duplicates)
+
+    $(document).on("click", ".sendEmailBtn", function () {
+
+        var bookingId = $(this).data("booking-id");
+        console.log("Booking ID:", bookingId);
+
+        $.ajax({
+            url: "/Super/RentAdmin/SendEmailToParticipant",
+            type: "POST",
+            data: { bookingId: bookingId },
+            success: function (response) {
+                if (response.success) {
+                    alert("Email sent successfully!");
+                } else {
+                    alert(response.message);
+                }
+            },
+            error: function () {
+                alert("Error sending email.");
+            }
+        });
+    });
+</script>

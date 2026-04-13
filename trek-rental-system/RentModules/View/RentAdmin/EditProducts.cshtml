@@ -1,0 +1,42 @@
+﻿@using TTH.Areas.Super.Models.Rent;
+
+
+
+
+@model IEnumerable<ProductModel>
+
+<div class="container">
+    <h1>Dashboard</h1>
+    <table class="table">
+        <tr>
+            <th>Product ID</th>
+            <th>Product Name</th>
+
+            <th>Description</th>
+            <th>Cover Image</th>
+        </tr>
+
+        @foreach (var product in Model)
+        {
+            <tr>
+                <td class="product-actions">
+                    <button class="btn btn-danger"><a class="link-light" href="@Url.Action("EditProduct", "RentAdmin", new { id = product.Products_Id })">Edit This Product</a></button>
+                    <form action="@Url.Action("DeleteProduct", "RentAdmin", new { id = product.Products_Id })" method="post" style="display:inline;">
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="btn btn-danger">Delete</button>
+                    </form>
+                </td>
+                <td>@product.ProductName</td>
+
+                <td class="description">
+                    <ul>
+                        @Html.Raw(product.Description)
+                    </ul>
+                </td>
+                <td class="cover-image">
+                    <img src="@product.CoverImgUrl" class="EditProduct_Img" alt="Cover Image">
+                </td>
+            </tr>
+        }
+    </table>
+</div>

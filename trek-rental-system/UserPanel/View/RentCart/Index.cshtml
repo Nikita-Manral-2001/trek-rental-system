@@ -1,0 +1,353 @@
+﻿@model List<TTH.Areas.Super.Models.Rent.CartItemModel>
+@{
+    var firstItem = Model.FirstOrDefault();
+    var formattedStartDate = firstItem?.StartDate?.ToString("yyyy-MM-dd");
+    var formattedEndDate = firstItem?.EndDate?.ToString("yyyy-MM-dd");
+    var bookingId = firstItem?.BookingId;
+    var blockEndDate = ViewBag.BlockEndDate?.ToString("yyyy-MM-dd");
+    var gstPrice = ViewBag.GstPrice;
+ 
+   
+
+}
+<section class="container Rent_Checkout">
+    <div class="row">
+        <div class="col-12 d-flex justify-content-between align-items-center">
+            <h4 class="Cart_Title">  <i class="fa fa-shopping-cart" aria-hidden="true"></i> Your Cart</h4>
+
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-7 shadow p-3 mb-5 bg-white rounded">
+            @if (Model.Count == 0)
+            {
+                <p>Your cart is empty.</p>
+            }
+            else
+            {
+                @foreach (var item in Model)
+                {
+                    <div class="card mb-3" data-item-id="@item.CartItem_Id">
+                        <div class="row no-gutters">
+                            <div class="col-md-3">
+                                <img src="@item.CoverImage" class="card-img Rent_Checkout_img" width="100" height="200" alt="Product Image">
+                            </div>
+                            <div class="col-md-9">
+                                <div class="card-body">
+                                    <h5 class="card-title">@item.ProductName</h5>
+                                    <p class="card-text">@item.Variant</p>
+                                    <p class="card-text">
+                                        <span>
+                                            &#8377; <span class="item-total-price" data-price-per-unit="@item.TotalPrice">@item.TotalPrice</span>
+                                        </span>
+                                    </p>
+
+
+
+                                    <div class="d-flex justify-content-between align-items-center mb-3">
+                                        <div class="quantity-controls d-flex align-items-center">
+                                            <button class="btn btn-outline-secondary quantity-decrease"
+                                                    data-item-id="@item.CartItem_Id"
+                                                    data-startdate="@item.StartDate"
+                                                    data-trekid="@item.TrekId"
+                                                    data-trekname="@item.TrekName"
+                                                    data-blockenddate="@ViewBag.BlockEndDate"
+                                                    data-productid="@item.ProductId"
+                                                    data-variant="@item.VariantId"
+                                                    data-quantity="@item.Quantity">
+                                                -
+                                            </button>
+                                            <input type="text" class="form-control mx-2 item-quantity" value="@item.Quantity" data-item-id="@item.CartItem_Id" readonly>
+                                            <button class="btn btn-outline-secondary quantity-increase"
+                                                    data-item-id="@item.CartItem_Id"
+                                                    data-startdate="@item.StartDate"
+                                                    data-trekid="@item.TrekId"
+                                                    data-trekname="@item.TrekName"
+                                                    data-blockenddate="@ViewBag.BlockEndDate"
+                                                    data-productid="@item.ProductId"
+                                                    data-variant="@item.VariantId"
+                                                    data-quantity="@item.Quantity">
+                                                +
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div class="d-flex justify-content-center col-3 placeorder">
+                                        <form asp-action="Delete" method="post">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="id" value="@item.CartItem_Id" />
+                                            <input type="hidden" name="trekName" value="@item.TrekName" />
+                                            <input type="hidden" name="trekId" value="@item.TrekId" />
+                                            <input type="hidden" name="startDate" value="@item.StartDate" />
+                                            <input type="hidden" name="endDate" value="@item.EndDate" />
+                                            <input type="hidden" name="departureId" value="@item.DepartureId" />
+                                            <button type="submit" class="btn btn-danger">Remove</button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+            }
+        </div>
+        <div class="col-md-5 shadow p-3 mb-5 bg-white rounded">
+            <div class="card mb-3">
+                <div class="card-body">
+                    <h5 class="card-title Summary_title"><i class="fa fa-list-alt" aria-hidden="true"></i> Order Summary</h5>
+                    <p class="card-text Total_Items">Total Items: <span id="total-items">@Model.Sum(item => item.Quantity)</span></p>
+                    <p class="card-text Total_Price">
+                        Total Price (incl. 5% GST): &#8377;
+                        <span id="total-price">ViewBag.GstPrice</span>
+                    </p>
+
+                    @if (firstItem != null)
+                    {
+                        <!-- Updated Proceed to Checkout Button -->
+                        <div>
+                            <!-- Hidden input to store the current date -->
+                            <input type="hidden" id="currentDate" name="currentDate" />
+
+                            <!-- Proceed to Checkout Button -->
+                            <button class="Checkout_RentBtn" id="pay-now-btn">
+                                Proceed to Payment
+                            </button>
+                        </div>
+                        <br />
+                        <a asp-controller="Rent" asp-action="Index" class="Checkout_RentBtn"
+                           asp-route-trekId="@firstItem.TrekId"
+                           asp-route-trekName="@firstItem.TrekName"
+                           asp-route-startDate="@formattedStartDate"
+                           asp-route-endDate="@formattedEndDate"
+                           asp-route-departureId="@firstItem.DepartureId">Continue Renting</a>
+
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="allFieldsError"> Quantity not available for this size.</div>
+
+</section>
+
+<script>
+    $(document).ready(function () {
+        // Increase quantity event
+        $('.quantity-increase').on('click', function () {
+            updateQuantity($(this), 1);
+        });
+
+        // Decrease quantity event
+        $('.quantity-decrease').on('click', function () {
+            updateQuantity($(this), -1);
+        });
+
+        function updateQuantity(buttonElement, change) {
+            let itemId = buttonElement.data('item-id');
+            let quantityInput = $('input[data-item-id="' + itemId + '"]');
+            let currentQuantity = parseInt(quantityInput.val());
+            let newQuantity = currentQuantity + change;
+            var bookingId = "@firstItem?.BookingId";
+            if (newQuantity > 0) {
+                let trekId = buttonElement.data('trekid');
+                let trekName = buttonElement.data('trekname');
+                let startDate = buttonElement.data('startdate');
+                let blockEndDate = buttonElement.data('blockenddate');
+                let productId = buttonElement.data('productid');
+                let variantSize = buttonElement.data('variant');
+
+                $.ajax({
+                    type: "POST",
+                    url: "/RentCart/UpdateQuantityCheckTrekId",
+                    data: {
+                        trekId: trekId,
+                        startDate: startDate,
+                        blockEndDate: blockEndDate,
+                        productId: productId,
+                        variantSize: variantSize,
+                        quantity: newQuantity,
+                        bookingId: bookingId
+                    },
+                    success: function (response) {
+                        if (response.success) {
+                            quantityInput.val(newQuantity);
+
+                            // Calculate quantityTotalPrice
+                            let updatedTotalPrice = parseFloat(response.updatedTotalPrice);
+
+                            // Update the displayed price in the UI
+                            $('div[data-item-id="' + itemId + '"] .item-total-price').text(updatedTotalPrice.toFixed(2));
+
+                            // Update overall totals
+                            updateTotals();
+                        } else {
+                            $(document).ready(function () {
+                                // Show the error message
+                                $('#allFieldsError').show();
+
+                                // Hide the message after 5 seconds (5000 milliseconds)
+                                setTimeout(function () {
+                                    $('#allFieldsError').fadeOut('slow');
+                                }, 1000);
+                            });
+                        }
+                    },
+                    error: function () {
+                        alert("An error occurred while updating the quantity.");
+                    }
+                });
+            } else {
+                alert("Quantity must be greater than 0.");
+            }
+        }
+
+             function updateTotals() {
+        let totalItems = 0;
+        let totalPrice = 0;
+
+        // Sum quantities
+        $('.item-quantity').each(function () {
+            totalItems += parseInt($(this).val());
+        });
+
+        // Sum total prices
+        $('.item-total-price').each(function () {
+            totalPrice += parseFloat($(this).text());
+        });
+
+        // Add 5% GST and round to 0 decimal
+        let totalPriceWithGst = Math.round(totalPrice * 1.05);
+
+        // Update HTML
+        $('#total-items').text(totalItems);
+        $('#total-price').text(totalPriceWithGst);
+    }
+
+            // Initial totals update
+        updateTotals();
+
+        // Update the current date before submitting
+      @*   $('#R_pay-now-btn').on('click', function () {
+           
+                
+            // Get the current date in 'yyyy-MM-dd' format
+            let currentDate = new Date().toISOString().split('T')[0];
+
+            // Set the current date to the route parameter
+            let checkoutUrl = $(this).attr('href') + '&orderDate=' + currentDate;
+            $(this).attr('href', checkoutUrl);
+        }); *@
+
+
+
+
+
+
+
+    });
+</script>
+
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+
+<script>
+      var bookingId = "@firstItem?.BookingId";
+    var departureId = @firstItem?.DepartureId ?? 0;
+
+    $('#pay-now-btn').on('click', function () {
+        console.log("Pay Now button clicked");
+
+        if (!bookingId) {
+            console.error("Error: bookingId is undefined or null");
+            alert("Payment error: Booking ID is missing.");
+            return;
+        }
+
+        $('#loader-container').show();
+
+        $.post('/RentCart/CreateBooking', { bookingId: bookingId })
+            .done(function (data) {
+                console.log('Response from Razorpay While CreatingBooking:', data);
+
+                if (data && data.success) {
+                    if (data.orderId && data.orderId !== "NA") {
+                        initiateRazorpayPayment(data.orderId, data.amount);
+                    } else {
+                        console.error('Error: Invalid orderId received');
+                        alert("Payment error: Invalid order ID received.");
+                        $('#loader-container').hide();
+                    }
+                } else {
+                    console.error('Error: No valid data received');
+                    alert("Payment error: Failed to create a booking.");
+                    $('#loader-container').hide();
+                }
+            })
+            .fail(function (error) {
+                console.error('Error creating Razorpay order', error);
+                alert("Payment error: Could not initiate payment.");
+                $('#loader-container').hide();
+            });
+    });
+
+    function initiateRazorpayPayment(orderId, amount) {
+        var options = {
+@*              key: 'rzp_test_30Qxbb5mCkZ5kK', *@ 
+            key: 'rzp_live_ib91Yi3uBvGi3V',
+            amount: amount * 100,
+            currency: 'INR',
+            name: 'Trek The Himalayas',
+            description: 'Payment for Trek Booking',
+            order_id: orderId,
+            handler: function (response) {
+                console.log('Complete response from Razorpay Checkout:', response);
+                if (response.razorpay_payment_id) {
+                    handlePaymentSuccess(response);
+                } else {
+                    console.error('Incomplete response from Razorpay Checkout:', response);
+                }
+            },
+            prefill: {
+                name: '@firstItem?.FirstName @firstItem?.LastName',
+                email: '@firstItem?.Email',
+                contact: '@firstItem?.MobileNo',
+            },
+            notes: {
+                "TrekkerName": "@firstItem?.FirstName @firstItem?.LastName",
+                "BookingId": "@firstItem?.BookingId",
+                "Phone Number": "@firstItem?.MobileNo",
+                "E mail": "@firstItem?.Email",
+                "Trek Name": "@firstItem?.TrekName",
+                "StartDate": "@firstItem?.StartDate"
+            },
+            theme: {
+                color: '#F37254'
+            }
+        };
+
+        var rzp = new Razorpay(options);
+        rzp.on('payment.failed', function (response) {
+            console.error('Payment failed:', response.error);
+        });
+
+        rzp.open();
+    }
+
+    function handlePaymentSuccess(response) {
+        console.log('Response we are at handlePaymentSuccess at js:', response);
+        $('#loader-container').show();
+        $.post('/Rentcart/HandlePaymentSuccess', {
+            razorpay_payment_id: response.razorpay_payment_id,
+            razorpay_order_id: response.razorpay_order_id,
+            razorpay_signature: response.razorpay_signature,
+            bookingId: bookingId,
+            departureId: departureId
+        })
+            .done(function (data) {
+                $('#loader-container').hide();
+                console.log('Payment success handled on the server:', data);
+                window.location.href = '/RentCart/RentPaymentConfirm?bookingId=' + bookingId;
+            })
+            .fail(function (error) {
+                console.error('Error handling payment success on the server:', error);
+            });
+    }
+</script>

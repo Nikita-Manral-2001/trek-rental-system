@@ -1,0 +1,329 @@
+﻿@model TTH.Areas.Super.Models.Rent.RentOfflineDataViewModel
+
+<div class="container">
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            @TempData["Success"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            @TempData["Error"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+    <div class="d-flex justify-content-between align-items-center mb-2">
+        <h5><strong>Add Offline Data</strong></h5>
+    </div>
+    <div class="mb-3">
+        <div class="card-body">
+            <form method="post" enctype="multipart/form-data" asp-action="SaveProducts" asp-controller="RentAdmin">
+                <div class="">
+                    <div class="row">
+
+                       
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label asp-for="FirstName"><b>First Name</b></label>
+                                <input asp-for="FirstName" class="form-control" required />
+                                <span asp-validation-for="FirstName" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label asp-for="LastName"><b>Last Name</b></label>
+                                <input asp-for="LastName" class="form-control" required />
+                                <span asp-validation-for="LastName" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label><b>Email</b></label>
+                                <input type="email" class="form-control" name="Email" required />
+                                <span class="text-danger" data-valmsg-for="Email" data-valmsg-replace="true"></span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label><b>Mobile No</b></label>
+                                <input type="tel" class="form-control" name="MobileNo" required />
+                                <span class="text-danger" data-valmsg-for="MobileNo" data-valmsg-replace="true"></span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label asp-for="SelectedTrekId"><b>Trek Name</b></label>
+                                <select asp-for="SelectedTrekId" id="FilterTrekName" class="form-control"
+                                        asp-items="@(new SelectList(Model.Treks, "TrekId", "TrekName"))">
+                                    <option value="">-- Select Trek --</option>
+                                </select>
+                            </div>
+
+                            <input type="hidden" name="TrekDays" value="@ViewBag.trekDays" />
+                        </div>
+
+                        <div class="col-md-6">
+                            <label asp-for="DepartureId"><b>Departure Date</b></label>
+                            <select asp-for="DepartureId" id="FilterDepartureDate" class="form-select">
+                                <option value="">Choose Departure Date</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row">   
+                        
+
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label asp-for="SelectedProductId"><b>ProductName Name</b></label>
+                                <select asp-for="SelectedProductId" id="FilterProductName" class="form-control"
+                                        asp-items="@(new SelectList(Model.Products, "Products_Id", "ProductName"))">
+                                    <option value="">-- Select Product --</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label><b>Quantity</b></label>
+                                <input type="number" id="ProductQuantity" class="form-control" min="1" required />
+                                <span class="text-danger" data-valmsg-for="quantity" data-valmsg-replace="true"></span>
+                            </div>
+                        </div>
+
+
+                        <div class="col-md-6">
+                            <select id="FilterVariants" class="form-select">
+                                <option value="">Choose Size</option>
+                            </select>
+                        </div>
+
+                       
+
+                    </div>
+                    <div class="row mt-3">
+                        <div class="col-md-12">
+                            <h6><strong>Selected Products</strong></h6>
+                            <table class="table table-bordered" id="SelectedProductsTable">
+                                <thead>
+                                    <tr>
+                                        <th>Product_Id</th>
+                                        <th>Product_Name</th>
+                                        <th>Size</th>
+                                        <th>Quanity</th>
+                                        <th>Per_Day_Price</th>
+                                        <th>Total_Price</th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                               
+                            </table>
+                        </div>
+                        <h4>Total Amount (Including 5% GST): <strong><span id="GrandTotal">0</span></strong> </h4>
+                    </div>
+
+                </div>
+
+                <div class="col-md-12">
+                    <div class="form-group">
+                        <label asp-for="Note"><b>Note</b></label>
+                        <textarea asp-for="Note" class="form-control" rows="3" placeholder="Enter any notes here..."></textarea>
+                        <span asp-validation-for="Note" class="text-danger"></span>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary m-4">Submit</button>
+                <input type="hidden" id="SelectedProductsJson" name="SelectedProductsJson" />
+
+            </form>
+
+        </div>
+    </div>
+</div>
+
+
+
+@* Get DepartureDate Trek Wise *@
+<script>
+    $(document).ready(function () {
+
+        // When Trek is selected, fetch departure dates
+        $('#FilterTrekName').on('change', function () {
+            var trekId = $(this).val();
+
+            if (trekId) {
+                $.ajax({
+                    url: '@Url.Action("GetDepartureDates", "RentAdmin")',
+                    type: 'GET',
+                    data: { trekId: trekId }, // pass TrekId only
+                    success: function (response) {
+                        var $departureDropdown = $('#FilterDepartureDate');
+                        $departureDropdown.empty();
+                        $departureDropdown.append('<option value="">Choose Departure Date</option>');
+
+                        // populate dropdown with trekId-wise dates
+                        $.each(response, function (i, item) {
+                            $departureDropdown.append('<option value="' + item.value + '">' + item.text + '</option>');
+                        });
+
+                    },
+                    error: function (xhr, status, error) {
+                        console.error('Error fetching departure dates:', error);
+                    }
+                });
+            } else {
+                // reset departure dropdown if no trek is selected
+                $('#FilterDepartureDate').empty().append('<option value="">Choose Departure Date</option>');
+            }
+        });
+
+       
+
+    });
+</script>
+
+
+@* Get Variants Product Wise *@
+<script>
+    $(document).ready(function () {
+
+        // When Trek is selected, fetch departure dates
+        $('#FilterProductName').on('change', function () {
+            var productId = $(this).val();
+
+            if (productId) {
+                $.ajax({
+                    url: '@Url.Action("GetProductSize", "RentAdmin")',
+                    type: 'GET',
+                    data: { productId: productId}, // pass TrekId only
+                    success: function (response) {
+                        var $variantDropdown = $('#FilterVariants');
+                        $variantDropdown.empty();
+                        $variantDropdown.append('<option value="">Choose Size</option>');
+
+                        // populate dropdown with trekId-wise dates
+                        $.each(response, function (i, item) {
+                            $variantDropdown.append('<option value="' + item.value + '">' + item.text + '</option>');
+                        });
+
+                    },
+                    error: function (xhr, status, error) {
+                        console.error('Error fetching Size:', error);
+                    }
+                });
+            } else {
+                // reset departure dropdown if no trek is selected
+                $('#FilterVariants').empty().append('<option value="">Choose size</option>');
+            }
+        });
+
+
+
+    });
+</script>
+
+<script>
+    $(document).ready(function () {
+        $('#FilterVariants').on('change', function () {
+            var sizeId = $(this).val();
+            var trekId = $('#FilterTrekName').val();
+            var quantity = $('#ProductQuantity').val();
+            var productId = $('#FilterProductName').val();
+
+            if (sizeId && trekId && quantity && productId) {
+                $.ajax({
+                    url: '@Url.Action("GetProductDetailsBySize", "RentAdmin")',
+                    type: 'GET',
+                    data: { sizeId: sizeId, trekId: trekId, quantity: quantity, productId: productId },
+                    success: function (response) {
+                        console.log("Raw response:", response);
+
+                        if (response.success) {
+                            var product = response.data;
+
+                            // Append row with delete button
+                            $('#SelectedProductsTable tbody').append(
+                                '<tr>' +
+                                '<td>' + product.productId + '</td>' +
+                                '<td>' + product.productName + '</td>' +
+                                '<td>' + product.sizeName + '</td>' +
+                                '<td>' + product.quantity + '</td>' +
+                                '<td>' + product.pricePerDay + '</td>' +
+                                '<td class="total-price">' + product.totalPrice + '</td>' +
+                                '<td><button class="delete-row btn btn-danger btn-sm">Delete</button></td>' +
+                                '</tr>'
+                            );
+
+                            calculateTotalPrice();
+                        } else {
+                            alert(response.message);
+                        }
+                    },
+                    error: function (xhr, status, error) {
+                        console.error("Error fetching product details:", error);
+                    }
+                });
+            } else {
+                alert("Please select trek, product, size, and enter quantity.");
+            }
+        });
+
+        // Delete row handler
+        $(document).on('click', '.delete-row', function () {
+            $(this).closest('tr').remove();
+            calculateTotalPrice();
+        });
+
+        // Function to calculate combined total
+        function calculateTotalPrice() {
+            var subtotal = 0;
+
+            $('#SelectedProductsTable tbody tr').each(function () {
+                var price = parseFloat($(this).find('.total-price').text()) || 0;
+                subtotal += price;
+            });
+
+            var gst = subtotal * 0.05;
+            var grandTotal = subtotal + gst;
+
+            subtotal = Math.round(subtotal);
+            gst = Math.round(gst);
+            grandTotal = Math.round(grandTotal);
+
+            $('#CombinedTotal').text(subtotal.toFixed(2));
+            $('#GstAmount').text(gst.toFixed(2));
+            $('#GrandTotal').text(grandTotal.toFixed(2));
+        }
+    });
+</script>
+
+
+
+
+<script>
+    $('form').on('submit', function () {
+
+        var products = [];
+        var grandTotal = parseFloat($('#GrandTotal').text()) || 0;
+
+        $('#SelectedProductsTable tbody tr').each(function () {
+            var row = $(this);
+            products.push({
+                productId: row.find('td:eq(0)').text(),
+                ProductName: row.find('td:eq(1)').text(),
+                SizeName: row.find('td:eq(2)').text(),
+                Quantity: parseInt(row.find('td:eq(3)').text()),
+                PricePerDay: parseFloat(row.find('td:eq(4)').text()),
+                TotalPrice: parseFloat(row.find('td:eq(5)').text()),
+                GrandTotal: grandTotal // ✅ Added
+            });
+        });
+
+        $('#SelectedProductsJson').val(JSON.stringify(products));
+    });
+</script>
+
+

@@ -1,0 +1,66 @@
+﻿@using TTH.Areas.Super.Models.Rent;
+@model ProductModel
+
+<div class="container">
+    <div class="row">
+        <div class="col-md-12 ">
+            <div class="content">
+                <div id="dynamicContent">
+                    <div class="card">
+                        <div class="card-header bg-primary text-white">
+                            <h3>Add Product</h3>
+                        </div>
+                        @if (ViewBag.IsSuccess)
+                        {
+                            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                                You have added new product successfully.
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                        }
+                        <div class="card-body">
+                            <form method="post" enctype="multipart/form-data" asp-action="AddProducts" asp-controller="RentAdmin">
+                                <div class="">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label asp-for="ProductName"><b>Product Name</b></label>
+                                                <input type="text" class="form-control" asp-for="ProductName" name="productName">
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label asp-for="SelectedSizes"><b>Size</b></label>
+                                                <select class="form-control" asp-for="SelectedSizes" asp-items="ViewBag.Size" multiple>
+                                                    <option value="">-----Choose-----</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label asp-for="CoverPhoto"><b>Cover Image</b></label>
+                                                <input type="file" class="form-control-file" asp-for="CoverPhoto">
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label asp-for="GalleryPhoto"><b>Product Gallery Images</b> (Select multiple images from drive)</label>
+                                                <input type="file" class="form-control-file" asp-for="GalleryPhoto" multiple>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-12">
+                                            <div class="form-group">
+                                                <label asp-for="Description"><b>Description</b></label>
+                                                <textarea class="form-control summerTextarea" asp-for="Description" name="description" rows="5"></textarea>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <button type="submit" class="btn btn-primary m-4">Submit</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

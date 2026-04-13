@@ -1,0 +1,81 @@
+﻿@using TTH.Areas.Super.Models.Rent
+@model ProductModel;
+
+
+<div class="container">
+    <h1>Edit Product</h1>
+
+    <form asp-action="EditProduct" method="post" enctype="multipart/form-data">
+        <input type="hidden" asp-for="Products_Id " />
+
+        <div class="form-group">
+            <label asp-for="ProductName"></label>
+            <input asp-for="ProductName" class="form-control" />
+            <span asp-validation-for="ProductName" class="text-danger"></span>
+        </div>
+
+
+
+        <div class="form-group">
+            <label asp-for="Description"><b>Description</b></label>
+            <textarea class="form-control summerTextarea" asp-for="Description" name="description" rows="5"></textarea>
+        </div>
+        <div class="form-group">
+            <label asp-for="SelectedSizes">Size</label>
+            <select asp-for="SelectedSizes" class="form-control" asp-items="ViewBag.Size" multiple></select>
+            <span asp-validation-for="SelectedSizes" class="text-danger"></span>
+        </div>
+
+        <div class="form-group">
+            <label asp-for="CoverPhoto"></label>
+            @if (Model.CoverImgUrl != null)
+            {
+                <div>
+                    <img src="@Model.CoverImgUrl" alt="Cover Photo" style="max-width: 100px; max-height: 100px;" />
+                </div>
+                <input type="hidden" asp-for="CoverImgUrl" />
+            }
+            <input type="file" asp-for="CoverPhoto" class="form-control-file" />
+            <span asp-validation-for="CoverPhoto" class="text-danger"></span>
+        </div>
+
+        <div class="form-group">
+            <label asp-for="GalleryPhoto">Add More Gallery Images (Select multiple images from drive)</label>
+            <input type="file" asp-for="GalleryPhoto" class="form-control-file" multiple />
+            <span asp-validation-for="GalleryPhoto" class="text-danger"></span>
+        </div>
+
+        @if (Model.Gallery != null && Model.Gallery.Any())
+        {
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Action</th>
+                        <th>Id</th>
+                        <th>Image</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var photo in Model.Gallery)
+                    {
+                        <tr>
+                            <td>
+                                <form asp-controller="Admin" asp-action="DeleteGalleryImage" method="post">
+                                    <input type="hidden" name="id" value="@photo.Gallery_Id" />
+                                    <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Are you sure you want to delete this image?');">Delete</button>
+                                </form>
+                            </td>
+                            <td>@photo.Gallery_Id</td>
+                            <td>
+                                <img src="@photo.URL" alt="Gallery Photo" style="max-width: 100px; max-height: 100px;" />
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+
+        <br />
+        <button type="submit" class="btn btn-primary">Save</button>
+    </form>
+</div>

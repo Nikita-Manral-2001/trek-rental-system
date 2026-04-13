@@ -1,0 +1,27 @@
+﻿<body>
+    <div class="container">
+        <div class="row justify-content-center align-items-center vh-100">
+            <div class="col-md-6 text-center">
+                <div class="alert alert-success" role="alert">
+                    <h1 class="alert-heading">Payment Successful!</h1>
+                    <p>Thank you for your purchase. Your payment has been successfully processed.</p>
+                    <hr>
+                    <p class="mb-0">You will receive a confirmation email shortly.</p>
+                </div>
+                <button class="btn btn-primary" id="continueShopping">Continue Shopping</button>
+            </div>
+        </div>
+    </div>
+
+
+
+    <!-- jQuery Script -->
+    <script>
+        $(document).ready(function () {
+            $('#continueShopping').click(function () {
+                // Add your jQuery action here
+                window.location.href = 'Rent/RentTrekDetailsForm'; // Redirect to homepage or another page
+            });
+        });
+    </script>
+</body>

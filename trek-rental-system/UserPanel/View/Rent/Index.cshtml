@@ -1,0 +1,170 @@
+﻿@{
+    ViewData["Title"] = "Rent Trekking Gear Online | Trek The Himalayas";
+    ViewData["Description"] = "Rent high-quality trekking gear from Trek The Himalayas. Affordable, reliable equipment for your Himalayan treks. Book trekking packages and gear in one place.";
+    ViewData["OgTitle"] = "Rent Trekking Gear Online | Trek The Himalayas";
+    ViewData["OgDescription"] = "Rent high-quality trekking gear from Trek The Himalayas. Affordable, reliable equipment for your Himalayan treks. Book trekking packages and gear in one place.";
+    ViewData["OgImage"] = "https://trekthehimalayas.com/assets/images/tthlogo.webp";
+    ViewData["Canonical"] = "https://trekthehimalayas.com/Rent";
+
+}
+
+@using TTH.Models.user
+@using System.Security.Claims
+@using TTH.Models.home
+@model ViewModel
+
+@inject Microsoft.AspNetCore.Identity.SignInManager<ApplicationUser> _signinManager
+
+<div class="container">
+    <div class="CartCountBtn">
+     <a asp-controller="RentCart" asp-action="Index"
+    asp-route-trekName="@Model.TrekName"
+           asp-route-trekId="@Model.TrekId"
+    asp-route-startDate="@Model.StartDate.Value.ToString("yyyy-MM-ddTHH:mm:ss")"
+    asp-route-endDate="@Model.EndDate.Value.ToString("yyyy-MM-ddTHH:mm:ss")"
+    asp-route-blockEndDate="@Model.BlockEndDate.ToString("yyyy-MM-ddTHH:mm:ss")"
+    asp-route-departureId="@Model.DepartureId"
+    asp-route-bookingId="@Model.BookingId" class="btn btn-secondary">
+        <i class="fa fa-shopping-cart"> View Cart <span id="ProductCount" class="badge bg-danger"></span></i>
+
+    </a> 
+    </div>
+
+
+    <div class="row product_row">
+        @foreach (var product in Model.Products.GroupBy(p => p.Products_Id).Select(g => g.First()))
+        {
+            var totalPrice = Model.ProductTotalPrices.ContainsKey(product.Products_Id)
+            ? Model.ProductTotalPrices[product.Products_Id]
+            : 0; // Default to 0 if no price found
+
+            <div class="col-md-3 shadow p-3 mb-5 bg-white rounded">
+                <div class="card Product_Card">
+                    <div class="Product_Image_Div">
+                        <img src="@product.CoverImgUrl" width="200" height="100" class="Product_Image" alt="Product Image">
+
+                    </div>
+                    <div class="card-body">
+                        <div class="productBtn row">
+                            <div class="col-md-12">
+                                <p class="product-heading">@product.ProductName</p>
+                               
+                            </div>
+                            
+                            <div class="col-md-5">
+                                <p class="card-text">&#8377; @totalPrice</p>
+                            </div>
+                            <div class="col-md-7">
+                                <a href="#" class="btn-ViewDetails view-details" data-bs-toggle="modal" data-bs-target="#productModal" data-productid="@product.Products_Id">
+                                    View Details
+                                </a>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+
+<!-- Product Details Modal -->
+<div class="modal fade RentModal" id="productModal" tabindex="-1" aria-labelledby="productModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-fullscreen" id="dialog-fullscreen">
+        <div class="modal-content modal-content-fullscreen">
+            <div class="modal-header">
+                <h5 class="modal-title" id="productModalLabel">Product Details</h5>
+                <button type="button" id="closeModalButton" class="btn-close " data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body modal-body-fullscreen">
+                <!-- Product details will be dynamically loaded here -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    $(document).ready(function () {
+        // Helper function to get query parameters by name
+        function getQueryParam(name) {
+            const urlParams = new URLSearchParams(window.location.search);
+            return urlParams.get(name);
+        }
+
+        const selectedTrekId = getQueryParam('trekId');
+        const selectedTrekName = getQueryParam('trekName');
+        const selectedStartDate = getQueryParam('startDate');
+        const selectedEndDate = getQueryParam('endDate');
+        const selectedDepartureId = getQueryParam('departureId');
+        const blockEndDate = '@Model.BlockEndDate.ToString("yyyy-MM-dd")';  // Passing BlockEndDate as string
+
+        // Pass the ProductTotalPrices to a JavaScript object
+        const productTotalPrices = @Html.Raw(Json.Serialize(@Model.ProductTotalPrices))
+
+            // Handle view details click event
+            $('.view-details').click(function (event) {
+                event.preventDefault(); // Prevent the default link behavior
+                const productId = $(this).data('productid');
+                const productPrice = productTotalPrices[productId];  // Get product price using productId
+
+                let url = '@Url.Action("GetProductDetails", "Rent")/' + productId;
+
+                // Append trek information if available
+                if (selectedTrekId) {
+                    url += `?trekId=${selectedTrekId}&trekName=${selectedTrekName}&startDate=${selectedStartDate}&endDate=${selectedEndDate}&departureId=${selectedDepartureId}&blockEndDate=${blockEndDate}&productTotalPrices=${productPrice}`;
+                }
+
+                // AJAX call to load product details into modal
+                $.ajax({
+                    url: url,
+                    type: 'GET',
+                    success: function (data) {
+                        $('#productModal .modal-body').html(data); // Load product details into modal
+                        // $('#productModal').modal('show'); // Show modal
+                    },
+                    error: function (xhr, status, error) {
+                        console.error('Failed to load product details:', status, error);
+                    }
+                });
+            });
+
+        // Close modal button (commented out as it's optional and already has correct logic)
+        // $('#closeModalButton').click(function () {
+        //     if ($('#productModal').hasClass('show')) {
+        //         $('#productModal').modal('hide');
+        //     }
+        // });
+    });
+</script>
+
+<script>
+    $(document).ready(function () {
+        var departureId = '@Model.DepartureId'; 
+        
+        function CartItemCount(departureId) {          
+            $("#ProductCount").text("");  // Use .text() for non-input elements like span or div            
+            $.ajax({
+                url: '/RentCart/ProductCount',  
+                data: { departureId: departureId },
+                type: 'GET',
+                success: function (response) {
+                    // Update the product count (use .text() for a span or div)
+                    $("#ProductCount").text(response.productCount);
+                },
+                error: function (error) {
+                    console.error("Error updating cart count: ", error);
+                    alert("There was an error. Please try again.");
+                }
+            });
+        }
+        // Call the function on page load
+        CartItemCount(departureId);
+        // Attach the event listener for the button click
+        $("#addToCartButton").on("click", function () {
+            CartItemCount(departureId);  // Call the reusable function when the button is clicked
+        });
+    });
+</script>
+
+

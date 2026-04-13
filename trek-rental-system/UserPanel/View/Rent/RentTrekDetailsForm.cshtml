@@ -1,0 +1,51 @@
+﻿@model IEnumerable<TTH.Models.RentTrekFormViewModel>
+
+@{
+    ViewData["Title"] = "Trek Form";
+}
+
+<div class="container shadow p-3 mb-5 bg-white rounded RentalDetailFrom_Div">
+    <p class="Welcome_Title">Welcome, @Model.FirstOrDefault()?.FirstName @Model.FirstOrDefault()?.LastName!</p>
+    <div>
+        <h2>Choose Your Booked Treks</h2>
+        @if (Model != null && Model.Any())
+        {
+            <select id="trekDropdown" class="form-select" >
+                <option value="">----Choose Trek----</option>
+                @foreach (var trek in Model)
+                {
+                    <option value="@trek.TrekId"
+                            data-id="@trek.TrekId"
+                            data-start="@trek.StartDate.ToString("yyyy-MM-dd")"
+                            data-end="@trek.EndDate.ToString("yyyy-MM-dd")"
+                            data-departure="@trek.DepartureId">
+                        @trek.TrekName - @trek.StartDate.ToString("dd-MM-yyyy") to @trek.EndDate.ToString("dd-MM-yyyy")
+                    </option>
+                }
+            </select>
+        }
+        else
+        {
+            <p>No available treks with a start date more than 4 days away.</p>
+        }
+    </div>
+</div>
+
+<script>
+    $(document).ready(function () {
+        $('#trekDropdown').on('change', function () {
+            var selectedOption = $(this).find('option:selected');
+            var trekId = selectedOption.data('id');
+            var trekName = selectedOption.text().split('-')[0].trim();
+            var startDate = selectedOption.data('start');
+            var endDate = selectedOption.data('end');
+            var departureId = selectedOption.data('departure');
+
+            if (trekId) {
+                var baseUrl = '@Url.Action("Index", "Rent")';
+                var queryString = `?trekId=${trekId}&trekName=${trekName}&startDate=${startDate}&endDate=${endDate}&departureId=${departureId}`;
+                window.location.href = baseUrl + queryString;
+            }
+        });
+    });
+</script>

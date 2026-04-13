@@ -1,0 +1,157 @@
+﻿@model TTH.Areas.Super.Models.Rent.RentreschedulingViewModel
+
+<form id="editUserForm">
+    <div class="modal-header">
+        <h5 class="modal-title">Edit User</h5>
+        <button type="button" class="close" data-bs-dismiss="modal">&times;</button>
+    </div>
+
+    <div class="modal-body">
+
+        <input type="hidden" asp-for="@Model.User.Participant_Id" />
+        <div class="row">
+            <div class="form-group mb-3 col-md-4">
+                <label>Name</label>
+                <p>@Model.User.FirstName @Model.User.LastName</p>
+                
+            </div>
+         
+         
+         
+            <div class="form-group mb-3 col-md-4">
+                <label>Trek Name</label>
+                <p>@Model.User.TrekName</p>
+            </div>
+            <div class="form-group mb-3 col-md-4">
+                <label>Trek Date</label>
+                <p>@Model.User.StartDate - @Model.User.EndDate</p>
+            </div>
+        </div>
+       <div class="row">
+
+            <div class="col-md-6">
+                <div class="form-group">
+                    <label><b>Trek Name</b></label>
+                    <select id="FilterTrekName" class="form-control"
+                            asp-items="@(new SelectList(Model.Treks, "TrekId", "TrekName"))">
+                        <option value="">-- Select Trek --</option>
+                    </select>
+                </div>
+
+                <input type="hidden" name="TrekDays" value="@ViewBag.trekDays" />
+            </div>
+
+            <div class="col-md-6">
+                <label><b>Departure Date</b></label>
+                <select id="FilterDepartureDate" class="form-select">
+                    <option value="">Choose Departure Date</option>
+                </select>
+            </div>
+
+       </div>
+      
+       <div class="row">
+            <div class="col-md-6">
+                <div class="form-group mb-3">
+                    <label>Price</label>
+                    <input type="text" asp-for="User.TotalAmount" class="form-control" placeholder="Enter price" />
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="form-group mb-3">
+                    <label>Note</label>
+                    <textarea class="form-control" asp-for="User.Note" placeholder="Enter note"></textarea>
+                </div>
+            </div>
+       </div>
+       
+        
+        
+
+    </div>
+
+    <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        <button type="button" onclick="updateUser()">Save Changes</button>
+    </div>
+</form>
+
+@* Get DepartureDate Trek Wise *@
+<script>
+    $(document).ready(function () {
+
+        // When Trek is selected, fetch departure dates
+        $('#FilterTrekName').on('change', function () {
+            var trekId = $(this).val();
+
+            if (trekId) {
+                $.ajax({
+                    url: '@Url.Action("GetDepartureDates", "RentAdmin")',
+                    type: 'GET',
+                    data: { trekId: trekId }, // pass TrekId only
+                    success: function (response) {
+                        var $departureDropdown = $('#FilterDepartureDate');
+                        $departureDropdown.empty();
+                        $departureDropdown.append('<option value="">Choose Departure Date</option>');
+
+                        // populate dropdown with trekId-wise dates
+                        $.each(response, function (i, item) {
+                            $departureDropdown.append('<option value="' + item.value + '">' + item.text + '</option>');
+                        });
+
+                    },
+                    error: function (xhr, status, error) {
+                        console.error('Error fetching departure dates:', error);
+                    }
+                });
+            } else {
+                // reset departure dropdown if no trek is selected
+                $('#FilterDepartureDate').empty().append('<option value="">Choose Departure Date</option>');
+            }
+        });
+
+
+
+    });
+</script>
+
+
+
+
+
+
+
+
+
+<script>
+        function updateUser() {
+
+        var data = {
+            Participant_Id: $('input[name="User.Participant_Id"]').val(),
+            TrekName: $('#FilterTrekName option:selected').text(), // Trek Name
+            DepartureId: $('#FilterDepartureDate').val(),
+            StartDate: null, // optional (if you want update)
+            EndDate: null,   // optional
+            Note: $('textarea[name="User.Note"]').val(),
+            TotalAmount: $('input[name="User.TotalAmount"]').val()
+        };
+
+        $.ajax({
+           url: '@Url.Action("UpdateUser", "RentAdmin")',
+            type: 'POST',
+            data: data,
+            success: function (res) {
+                if (res.success) {
+                    alert("Updated Successfully ✅");
+                    location.reload();
+                } else {
+                    alert(res.message);
+                }
+            },
+            error: function () {
+                alert("Something went wrong ❌");
+            }
+        });
+    }
+</script>

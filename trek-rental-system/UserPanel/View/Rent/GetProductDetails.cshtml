@@ -1,0 +1,325 @@
+﻿@model TTH.Areas.Super.Models.Rent.CombinedViewModel;
+
+@{
+    ViewData["Title"] = "Product Page";
+}
+
+
+
+<div class="container product-page">
+    <div class="row shadow p-1 bg-white rounded">
+
+
+        <div class="col-md-6 product-image">
+            <!-- Carousel for Product Images -->
+
+            <div id="carouselRentProduct" class="carousel slide" data-bs-ride="carousel">
+                <div class="carousel-inner">
+                    @for (int i = 0; i < Model.ProductVM.Product.Gallery?.Count; i++)
+                    {
+                        <div class="@(i == 0 ? "carousel-item active" : "carousel-item")">
+                            <img src="@Model.ProductVM.Product.Gallery[i].URL" class="Carousel_Rent_image" width="300" height="300" alt="@Model.ProductVM.Product.Gallery[i].Name">
+                        </div>
+                    }
+                </div>
+
+                <!-- Carousel Controls -->
+                <button class="carousel-control-prev" type="button" data-bs-target="#carouselRentProduct" data-bs-slide="prev">
+                    <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                    <span class="visually-hidden">Previous</span>
+                </button>
+                <button class="carousel-control-next" type="button" data-bs-target="#carouselRentProduct" data-bs-slide="next">
+                    <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                    <span class="visually-hidden">Next</span>
+                </button>
+            </div>
+
+            <div class="row mt-5">
+                <div class="d-flex flex-row justify-content-center align-items-center Product-Img-Thunbnail">
+                    @for (int i = 0; i < Model.ProductVM.Product.Gallery?.Count; i++)
+                    {
+                        <div class="mx-2 Product-Img-Thunbnail-Img">
+                            <img src="@Model.ProductVM.Product.Gallery[i].URL"
+                                 class="img-fluid img-thumbnail"
+                                 alt="@Model.ProductVM.Product.Gallery[i].Name"
+                                 style="cursor: pointer; width: 120px; height:100px;"
+                                 onclick="goToSlide(@i)" />
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+
+        <div class="col-md-6 product-details">
+            <div class="row">
+            <div class="product-details-ProductName col-md-6"> 
+                <p>@Model.ProductVM.Product.ProductName</p>
+                </div>
+
+
+            @if (Model.ProductVM.IsTrekBooked)
+            {
+                    <div class="product-details-price col-md-6">
+                    <p>&#8377; @Model.ProductVM.TotalPrice</p>
+                </div>
+
+            }
+            else
+            {
+                    <div class="product-details-price col-md-6">
+                <p>Price per day : &#8377;@Model.ProductVM.Product.PricePerDay</p>
+                    </div>
+            }
+            </div>
+            <div class="product-description">
+
+                @Html.Raw(Model.ProductVM.Product.Description)
+            </div>
+            <hr class="Rent-red-line" />
+
+            <div id="error-message" class="alert alert-danger mt-3" style="display:none;"></div>
+            <div id="successmessage" class="alert alert-success mt-3" style="display:none;"></div>
+
+            <!-- Product Order Form -->
+            <div class="product-order mt-4">
+                <form asp-controller="RentCart" asp-action="AddToCart" method="post" onsubmit="return validateForm()">
+                    <div class="form-group row">
+
+                        <div class="col-12">
+                            <label for="variant">Product Size</label>
+                            <select class="form-control Size-red-border form-select" id="variant" name="variant" required>
+                                <option value="">----Choose Size----</option>
+                                @foreach (var size in Model.ProductVM.Product.Sizes)
+                                {
+                                    <option value="@size.S_Id">@size.Name</option>
+                                }
+                            </select>
+                        </div>
+
+                    </div>
+                    <div class="row">
+                        <div class="col-3 ">
+                            <label for="quantity">Quantity</label>
+                            <input type="number" class="form-control Size-red-border Rent-Quantity" id="quantity" name="quantity" value="1" min="1" required>
+                        </div>
+                        <div class="col-9">
+                            <input type="hidden" name="blockEndDate" value="@Model.ProductVM.BlockEndDate" />
+                            <input type="hidden" name="trekName" value="@Model.ProductVM.TrekName" />
+                            <input type="hidden" name="variant" value="@Model.ProductVM.Variant" />
+                            <input type="hidden" name="productId" value="@Model.ProductVM.Product.Products_Id" />
+                            <input type="hidden" name="productName" value="@Model.ProductVM.Product.ProductName" />
+                            <input type="hidden" name="totalPrice" value="@Model.ProductVM.TotalPrice" />
+                            <input type="hidden" id="trekId" name="trekId" value="@Model.ProductVM.TrekId" />
+                            <input type="hidden" id="startDate" name="startDate" value="@Model.ProductVM.StartDate.ToString("yyyy-MM-dd")" />
+                            <input type="hidden" id="endDate" name="endDate" value="@Model.ProductVM.EndDate.ToString("yyyy-MM-dd")" />
+                            <input type="hidden" id="departureId" name="departureId" value="@Model.ProductVM.DepartureId" />
+                            <input type="hidden" name="coverImage" value="@Model.ProductVM.Product.Gallery?.FirstOrDefault()?.URL" />
+                            <input type="hidden" name=" TotalPrice" value="@Model.ProductVM.TotalPrice" />
+                            <input type="hidden" name="userId" value="@Model.ProductVM.UserId" />
+                            <input type="hidden" name="userEmail" value="@Model.ProductVM.UserEmail" />
+                            <button type="submit" class="AddToCart-Btn mt-4" id="addToCartButton">Add-To-Cart</button>
+                        </div>
+
+                    </div>
+
+                </form>
+
+
+                <!-- Error message for invalid conditions -->
+
+            </div>
+        </div>
+    </div>
+
+
+
+
+
+
+    @*       <div class="container mt-4">
+    <h2 class="text-center mb-4">Similar Products</h2>
+    <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 row-cols-xl-6 g-4">
+    @foreach (var product in Model.HomeVM.Products.GroupBy(p => p.Products_Id).Select(g => g.First()))
+    {
+    @* var totalPrice = Model.HomeVM.ProductTotalPrices != null && Model.HomeVM.ProductTotalPrices.ContainsKey(product.Products_Id)
+    ? Model.HomeVM.ProductTotalPrices[product.Products_Id]
+    : 0; // Default to 0 if no price found or ProductTotalPrices is null
+
+    <div class="col-md-6 col-lg-2 mb-4">
+    <div class="card">
+    <img src="@product.CoverImgUrl" class="card-img-top" alt="Product Image">
+    <div class="card-body">
+    <h5 class="card-title">@product.ProductName</h5>
+    <p class="card-text">Price: &#8377; @Model.HomeVM.PricePerDay</p>
+    <div class="btn-group">
+    <a href="#" class="btn btn-outline-danger view-details" data-productid="@product.Products_Id">View Details</a>
+    </div>
+    </div>
+    </div>
+    </div>
+    }
+    </div>
+    </div> *@
+
+
+</div>
+
+
+
+
+
+
+<script>
+    function getUrlParameter(name) {
+        name = name.replace(/[\[]/, '\\[').replace(/[\]]/, '\\]');
+        var regex = new RegExp('[\\?&]' + name + '=([^&#]*)');
+        var results = regex.exec(location.search);
+        return results === null ? '' : decodeURIComponent(results[1].replace(/\+/g, ' '));
+    }
+
+    document.getElementById('variant').addEventListener('change', function () {
+        updateHiddenFields();
+        checkTrekIdInDatabase();  // Trigger when variant is changed
+    });
+
+    document.getElementById('quantity').addEventListener('change', function () {
+        updateHiddenFields();
+        checkTrekIdInDatabase();  // Trigger when quantity is changed
+    });
+
+    function updateHiddenFields() {
+        var variantSelect = document.getElementById('variant');
+        var selectedSizeName = variantSelect ? variantSelect.value : '';  // Check if element exists
+        var quantityValue = document.getElementById('quantity') ? document.getElementById('quantity').value : '';
+
+        var userIdElement = document.getElementById('userId');  // Assuming there's an input with ID 'userId'
+        var userId = userIdElement ? userIdElement.value : '';
+
+        if (variantSelect && quantityValue) {
+            document.querySelector('input[name="variant"]').value = selectedSizeName;
+            document.querySelector('input[name="quantity"]').value = quantityValue;
+        }
+    }
+
+    function checkTrekIdInDatabase() {
+        var variantSelect = document.getElementById('variant');
+        var selectedSizeName = variantSelect ? variantSelect.value : '';
+        var quantityValue = document.getElementById('quantity') ? document.getElementById('quantity').value : '';
+
+        var trekId = document.getElementById('trekId') ? document.getElementById('trekId').value : '';
+        var startDate = document.getElementById('startDate') ? document.getElementById('startDate').value : '';
+        var blockEndDate = document.querySelector('input[name="blockEndDate"]') ? document.querySelector('input[name="blockEndDate"]').value : '';
+        var productId = document.querySelector('input[name="productId"]') ? document.querySelector('input[name="productId"]').value : '';
+        var userEmail = document.querySelector('input[name="userEmail"]') ? document.querySelector('input[name="userEmail"]').value : ''; // Get the user email
+
+        if (selectedSizeName && quantityValue) {
+            $.ajax({
+                url: '/RentCart/CheckTrekId',
+                type: 'POST',
+                data: {
+                    trekId: trekId,
+                    startDate: startDate,
+                    blockEndDate: blockEndDate,
+                    productId: productId,
+                    selectedSizeName: selectedSizeName,
+                    quantity: quantityValue,
+                    userEmail: userEmail // Include the user email in the request
+                },
+                success: function (response) {
+                    var addToCartButton = document.getElementById('addToCartButton');
+                    var errorMessage = document.getElementById('error-message');
+
+                    if (response.success) {
+                        if (response.isQuantityAvailable) {
+                            addToCartButton.disabled = false;
+                            errorMessage.style.display = 'none';
+                        } else {
+                            addToCartButton.disabled = true;
+                            errorMessage.style.display = 'block';
+                            errorMessage.innerText = 'Quantity not available for this size.';
+
+                            setTimeout(function () {
+                                errorMessage.style.display = 'none';
+                            }, 5000);
+                        }
+                    }
+                  
+                    else {
+                        console.log(response);
+                        addToCartButton.disabled = true;
+                        errorMessage.style.display = 'block';
+                        errorMessage.innerText = 'Trek not selected. Please book your trek first to rent the products.';
+                        // Redirect to the specified URL
+                        setTimeout(function () {
+                            errorMessage.style.display = 'none';
+                        }, 4000);
+                        // window.location.href = '/rent/renttrekdetailsform';
+                    }
+                },
+                error: function () {
+                    var errorMessage = document.getElementById('error-message');
+                    errorMessage.style.display = 'block';
+                    errorMessage.innerText = 'An error occurred while checking the TrekId.';
+
+                    setTimeout(function () {
+                        errorMessage.style.display = 'none';
+                    }, 2000);
+                }
+            });
+        }
+    }
+
+    // Ensure the DOM is loaded before updating hidden fields
+    document.addEventListener("DOMContentLoaded", function () {
+        updateHiddenFields();
+    });
+</script>
+
+<!-- JavaScript to Jump to Specific Carousel Slide -->
+<script>
+    function goToSlide(index) {
+        var carousel = new bootstrap.Carousel(document.getElementById('carouselRentProduct'));
+        carousel.to(index);  // Jump to the selected slide based on the thumbnail clicked
+    }
+</script>
+<script>
+
+        var addToCartButton = document.getElementById('addToCartButton');
+        if (addToCartButton) {
+            addToCartButton.addEventListener('click', function (e) {
+
+                var variantSelect = document.getElementById("variant");
+               
+                var selectedSizeName = variantSelect ? variantSelect.value : '';
+              
+                var errorMessage = document.getElementById("error-message");
+            var successMessage = document.getElementById("successmessage");
+               
+
+                if (selectedSizeName === "") {
+                    e.preventDefault();  // Prevent form submission
+                    errorMessage.style.display = "block";
+                    errorMessage.innerText = "Please select a size before adding to cart.";
+
+                    setTimeout(function () {
+                        errorMessage.style.display = 'none';
+                    }, 3000);  // Error message disappears after 3 seconds
+                } else if (selectedSizeName) {
+                successMessage.style.display = "block";
+                successMessage.innerText = "Item Added in cart";
+
+                setTimeout(function () {
+                    successMessage.style.display = 'none';
+                }, 3000);  // Error message disappears after 3 seconds
+                }
+                else{
+                    checkTrekIdInDatabase();  // Proceed with checking in the database
+                }
+            });
+        } else {
+            alert('Button not found!');
+        }
+  
+</script>
+

@@ -1,0 +1,352 @@
+﻿@model List<TTH.Areas.Super.Data.Rent.RentAllParticipant>
+
+@{
+    ViewData["Title"] = "Search Trekker";
+}
+
+<div class="container mt-5">
+
+    <div class="selectDepartureAdmin mt-1 row">
+        <div class="col-md-6">
+            <select id="TrekId" asp-items="ViewBag.Treks" class="form-select">
+                <option value="">Choose Trek</option>
+            </select>
+        </div>
+       
+        <div class="col-md-6">
+            <select id="DepartureDateId" class="form-select">
+                <option>Choose Departure Date</option>
+            </select>
+        </div>
+
+
+        <form id="orderSearchForm">
+            <div class="row mb-3">
+                <div class="col-md-4">
+                    <label for="dateFrom" class="form-label">Date From</label>
+                    <input type="date" class="form-control" id="dateFrom" name="dateFrom" placeholder="dd-mm-yyyy">
+                </div>
+                <div class="col-md-4">
+                    <label for="dateTo" class="form-label">Date To</label>
+                    <input type="date" class="form-control" id="dateTo" name="dateTo" placeholder="dd-mm-yyyy">
+                </div>
+                <div class="col-md-4">
+                    <label for="orderStatus" class="form-label">Order Status</label>
+                    <select class="form-select" id="orderStatus" name="orderStatus">
+                        <option value="">Select Payment Status</option>
+                        <option value="">All</option>
+                        <option value="Paid">Paid</option>
+                        <option value="Unpaid">Unpaid</option>
+                        <option value="Offline">Offline</option>
+                    </select>
+                </div>
+            </div>
+           
+        </form>
+    </div>
+    <div class="row">
+        <div class="col-md-5">
+
+            <label for="trekkerName">Search user by Name,Phone,Email</label>
+            <input type="text" class="form-control" id="trekkerName" name="trekkerName" placeholder="Enter Name/Phone/Email">
+
+
+            <div id="resultMessage" class="mt-3"></div>
+        </div>
+        <div class="col-md-1">
+            <label for="trekkerName">..</label><br>
+            <button type="button" id="searchButton" class="btn btn-primary">Search</button>
+        </div>
+    </div>
+
+    <div id="searchResults" class="mt-2"></div>
+    
+       
+   
+</div>
+
+<div class="container" id="RecentOrderDiv">
+    <h3>Recent Order</h3>
+    <table class="table table-bordered">
+        <thead class="thead-light">
+            <tr>
+
+                <th>User Details</th>
+                <th>Items Details</th>
+                <th>Status</th>
+               
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var group in Model.GroupBy(x => new { x.UserId, x.TrekId, x.StartDate, x.EndDate, x.BookingId }))
+            {
+                <tr>
+
+                    <td>
+                        <strong>Participant_Id:</strong> @group.First().Participant_Id <br>
+                        <strong>BookingId:</strong> @group.First().BookingId <br>
+                        <strong>Name:</strong> @group.First().FirstName @group.First().LastName <br>
+                        <strong>Email:</strong> @group.First().Email <br>
+                        <strong>Phone:</strong> @group.First().MobileNo <br>
+                        <strong>TrekName:</strong> @group.First().TrekName <br>
+                        <strong>Dept.Date:</strong> @group.First().StartDate.ToString("dd MMM yyyy") To @group.First().EndDate.ToString("dd MMM yyyy") <br>
+                     
+
+                    </td>
+                    
+                    <td>
+                        @{
+                            var formattedItems = new List<string>();
+
+                            for (int i = 0; i < group.Count(); i++)
+                            {
+                                var item = group.ElementAt(i);
+                                var names = item.ProductNames.Trim(new char[] { '[', ']', '"' }).Split(',');
+                                var quantities = item.Quantities.Trim(new char[] { '[', ']' }).Split(',');
+                                var variants = item.ProductVarients.Trim(new char[] { '[', ']', '"' }).Split(',');
+
+                                for (int j = 0; j < names.Length; j++)
+                                {
+                                    if (j < quantities.Length && j < variants.Length)
+                                    {
+                                        formattedItems.Add($"{names[j].Trim().Trim('\"')} {quantities[j].Trim()} {variants[j].Trim().Trim('\"')}");
+                                    }
+                                }
+                            }
+
+                            var displayItems = string.Join("<br>", formattedItems);
+                        }
+
+                        @Html.Raw(displayItems)
+
+                    </td>
+                    <td>
+                        <strong>Paid Amount:</strong> @group.Sum(x => x.TotalAmount).ToString()<br />
+
+                        @if (group.First().PaymentStatus == "Paid" || group.First().PaymentStatus == "Offline")
+                        {
+                            <strong>Order Date:</strong> 
+                            @group.First().OrderDate.ToString("dd MMM yyyy")
+                    
+                            <br />
+                            <strong>Payment Status:</strong>
+
+                            <span class="badge @(group.First().PaymentStatus == "Paid" ? "badge-success" : "badge-secondary")">
+                                @group.First().PaymentStatus
+                            </span>
+                            <button type="button"
+                                           class="btn btn-primary btn-sm sendEmailBtn"
+                                           data-booking-id="@group.First().BookingId">
+                                Send Email
+                            </button>
+
+                            <br />
+                        }
+                        <strong>Note:</strong> @group.First().Note<br />
+                    </td>
+
+
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+<script>
+    $(document).ready(function () {
+        $('#searchButton').click(function () {
+            var trekkerName = $('#trekkerName').val();
+
+            $.ajax({
+                type: "POST",
+                url: '@Url.Action("SearchTrekker", "RentCart")',
+                data: { trekkerName: trekkerName },
+                success: function (response) {
+                     $('#RecentOrderDiv').empty();
+                    $('#searchResults').html(response);
+                },
+                error: function () {
+                    $('#resultMessage').text('Error occurred while searching for trekker.');
+                }
+            });
+        });
+    });
+</script>
+
+<script>
+    $(document).ready(function () {
+        $('#orderStatus').on("change", function () {
+            var dateFrom = $("#dateFrom").val();
+            var dateTo = $("#dateTo").val();
+            var orderStatus = $("#orderStatus").val();
+            $.ajax({
+                type: "GET",
+                url: '@Url.Action("SearchOrders", "RentCart")',
+                data: {
+                    dateFrom: dateFrom,
+                    dateTo: dateTo,
+                    orderStatus: orderStatus
+                }, // <-- Missing comma was here
+                success: function (result) {
+                 
+                        $('#RecentOrderDiv').empty();
+                       
+                    $('#searchResults').html(result);
+                },
+                error: function () {
+                    alert('Error occurred while fetching orders.');
+                }
+            });
+        });
+    });
+</script>
+
+<script>
+    $(document).ready(function () {
+        // Function to get query parameter value by name
+        function getQueryParameter(name) {
+            const urlParams = new URLSearchParams(window.location.search);
+            return urlParams.get(name);
+        }
+
+        // Function to show the loader
+        function showLoader() {
+            $('#loader').show();
+        }
+
+        // Function to hide the loader
+        function hideLoader() {
+            $('#loader').hide();
+        }
+
+        // Function to populate the second dropdown
+        function populateSecondDropdown(TrekId) {
+            if (TrekId) {
+                showLoader(); // Show loader while data is being fetched
+                $.ajax({
+                    url: '/super/ManageBooking/GetDepartureDatesForRent', // Replace with your actual URL
+                    type: 'GET',
+                    data: { TrekId: TrekId },
+                    success: function (data) {
+                        hideLoader(); // Hide loader after data is fetched
+                        console.log(data);
+                        // Clear existing options
+                        $('#DepartureDateId').empty();
+                        $('#DepartureDateId').append($('<option>', { text: 'Choose Departure Date' }));
+
+                        // Populate the second dropdown with new options
+                        data.forEach(function (item) {
+                            $('#DepartureDateId').append($('<option>', {
+                                value: item.value,
+                                text: item.text
+                            }));
+                        });
+                    },
+                    error: function (xhr, status, error) {
+                        hideLoader(); // Hide loader in case of error
+                        console.error('Error fetching departure dates:', status, error);
+                    }
+                });
+            }
+        }
+
+        // Function to populate the transfer date dropdown
+        function populateTransferDateDropdown(TrekId) {
+            if (TrekId) {
+                showLoader(); // Show loader while data is being fetched
+                $.ajax({
+                    url: '/super/ManageBooking/GetDepartureDatesForRent', // Replace with your actual URL
+                    type: 'GET',
+                    data: { TrekId: TrekId },
+                    success: function (data) {
+                        hideLoader(); // Hide loader after data is fetched
+                        console.log(data);
+                        // Clear existing options
+                        $('#ToDate').empty();
+                        $('#ToDate').append($('<option>', { text: 'Choose Transfer Date' }));
+
+                        // Populate the second dropdown with new options
+                        data.forEach(function (item) {
+                            $('#ToDate').append($('<option>', {
+                                value: item.value,
+                                text: item.text
+                            }));
+                        });
+                    },
+                    error: function (xhr, status, error) {
+                        hideLoader(); // Hide loader in case of error
+                        console.error('Error fetching transfer dates:', status, error);
+                    }
+                });
+            }
+        }
+
+        // Trigger the function when the TrekId dropdown changes
+        $('#TrekId').on('change', function () {
+            var TrekId = $(this).val();
+            populateSecondDropdown(TrekId);
+        });
+
+        // Trigger the function when the ToTrek dropdown changes
+        $('#ToTrek').on('change', function () {
+            var TrekId = $(this).val();
+            populateTransferDateDropdown(TrekId);
+        });
+
+        // Get the TrekId from the query string
+        const trekId = getQueryParameter('TrekId');
+
+        // Populate the second dropdown on page load if TrekId exists
+        if (trekId) {
+            populateSecondDropdown(trekId);
+        }
+
+        // Enable/Disable the search button based on selection
+        $('#DepartureDateId').on('change', function () {
+            var TrekId = $('#TrekId').val();
+            var DepartureId = $('#DepartureDateId').val();
+
+            $.ajax({
+                type: "POST",
+                url: '@Url.Action("SearchParticipants", "RentCart")', // Change to your action
+                data: { TrekId: TrekId, DepartureId: DepartureId },
+                success: function (response) {
+                    $('#RecentOrderDiv').empty();
+                    $('#searchResults').html(response);
+                },
+                error: function () {
+                    console.error('Error occurred while searching for participants.');
+                }
+            });
+          
+        });
+
+        // $('#searchButton').click(function () {
+          
+        // });
+    });
+</script>
+<script>
+    $(document).off("click", ".sendEmailBtn"); // <-- FIX (removes duplicates)
+
+    $(document).on("click", ".sendEmailBtn", function () {
+
+        var bookingId = $(this).data("booking-id");
+        console.log("Booking ID:", bookingId);
+
+        $.ajax({
+            url: "/Super/RentAdmin/SendEmailToParticipant",
+            type: "POST",
+            data: { bookingId: bookingId },
+            success: function (response) {
+                if (response.success) {
+                    alert("Email sent successfully!");
+                } else {
+                    alert(response.message);
+                }
+            },
+            error: function () {
+                alert("Error sending email.");
+            }
+        });
+    });
+</script>
