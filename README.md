@@ -69,23 +69,24 @@ This is a partial module from a team project. Only my contribution has been uplo
 
 ### Admin Panel
 
-![Admin](trek-rental-system/Add_Inventory.png)
+![Admin](Add_Inventory.png)
 
 ### Product Listing
 
-![Products](trek-rental-system/All_Products.png)
+![Products](All_Products.png)
 
 ### Cart Page
 
-![Cart](trek-rental-system/Cart_Items.png)
+![Cart](Cart_Items.png)
 
 ### Product Details
 
-![Details](trek-rental-system/Product_Details.png)
+![Details](Product_Details.png)
 
 ### Payment
 
-![Payment](trek-rental-system/RazorPay.png)
+![Payment](RazorPay.png)
+
 
 
 
