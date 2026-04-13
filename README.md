@@ -81,7 +81,7 @@ This is a partial module from a team project. Only my contribution has been uplo
 
 ### Product Details
 
-![Details](Product_Details.png)
+![Details](Prodduct_Details.png)
 
 ### Payment
 
