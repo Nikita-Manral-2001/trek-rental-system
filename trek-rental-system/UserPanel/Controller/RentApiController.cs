@@ -1401,8 +1401,8 @@ namespace TTH.Controllers
         private string GenerateRazorpaySignature(string orderId, string paymentId)
         {
             // Use your Razorpay secret key to generate the signature
-            /*     string secret = "9Abv5143BuIm8jpOQxzdxwm6";*///testkey
-            string secret = "Hctq0JOfkx8ziVyXzoZKzaxI";
+            /*     string secret = "YOUR_SECRET_KEY";*///testkey
+            string secret = "YOUR_SECRET_KEY";
             string payload = orderId + "|" + paymentId;
 
             using (HMACSHA256 hmac = new HMACSHA256(Encoding.UTF8.GetBytes(secret)))
